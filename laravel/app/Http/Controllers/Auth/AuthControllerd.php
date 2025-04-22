@@ -10,11 +10,17 @@ use Hash;
 
 use App\Models\User;
 
+use App\Models\UserVerify;
+
+use Illuminate\Support\Str;
+
 use Illuminate\Http\Request;
 
 use App\Http\Controllers\Controller;
 
 use Illuminate\Support\Facades\Auth;
+
+use Illuminate\Support\Facades\Mail;
 
 use Illuminate\Support\Facades\Session;
 
@@ -92,9 +98,7 @@ class AuthControllerd extends Controller
 
         if (Auth::attempt($credentials)) {
 
-            return redirect()->intended('dashboard')
-
-                        ->withSuccess('You have Successfully loggedin');
+            return redirect()->intended('dashboard')->withSuccess('You have Successfully loggedin');
 
         }
 
@@ -104,7 +108,7 @@ class AuthControllerd extends Controller
 
     }
 
-      
+    
 
     /**
 
@@ -118,8 +122,7 @@ class AuthControllerd extends Controller
 
     public function postRegistration(Request $request)
 
-    {  
-
+    {
         $request->validate([
 
             'name' => 'required',
@@ -133,8 +136,31 @@ class AuthControllerd extends Controller
            
 
         $data = $request->all();
+        $createUser = $this->create($data);
 
-        $check = $this->create($data);
+  
+
+        $token = Str::random(64);
+
+  
+
+        UserVerify::create([
+
+              'user_id' => $createUser->id, 
+
+              'token' => $token
+
+            ]);
+
+  
+
+        Mail::send('mail.emailVerificationEmail', ['token' => $token], function($message) use($request){
+
+              $message->to($request->email);
+
+              $message->subject('Email Verification Mail');
+
+          });
 
          
 
@@ -186,19 +212,13 @@ class AuthControllerd extends Controller
 
     {
 
-      return User::create([
-
-        'name' => $data['name'],
-
+      return User::create(['name' => $data['name'],
         'email' => $data['email'],
-
-        'password' => Hash::make($data['password'])
-
-      ]);
+        'password' => Hash::make($data['password'])]);
 
     }
 
-    
+      
 
     /**
 
@@ -219,6 +239,56 @@ class AuthControllerd extends Controller
   
 
         return Redirect('login');
+
+    }
+
+    /**
+
+     * Write code on Method
+
+     *
+
+     * @return response()
+
+     */
+
+    public function verifyAccount($token)
+
+    {
+
+        $verifyUser = UserVerify::where('token', $token)->first();
+
+  
+
+        $message = 'Sorry your email cannot be identified.';
+
+  
+
+        if(!is_null($verifyUser) ){
+
+            $user = $verifyUser->user;
+
+              
+
+            if(!$user->is_email_verified) {
+
+                $verifyUser->user->is_email_verified = 1;
+
+                $verifyUser->user->save();
+
+                $message = "Your e-mail is verified. You can now login.";
+
+            } else {
+
+                $message = "Your e-mail is already verified. You can now login.";
+
+            }
+
+        }
+
+  
+
+      return redirect()->route('login')->with('message', $message);
 
     }
 

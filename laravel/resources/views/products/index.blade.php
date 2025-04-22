@@ -231,6 +231,7 @@
 
                 // Reattach event handlers
                 attachEventHandlers();
+                
             },
             error: function(xhr) {
                 console.error('Error loading products:', xhr);

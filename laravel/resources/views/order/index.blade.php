@@ -1,6 +1,8 @@
 @extends('layouts.app')
 @section('content')
-<div class="container">
+<div class='bg-white p-6 rounded-lg shadow-md'>
+    <style>
+    </style>
     <div class="row mb-4">
         <div class="col d-flex justify-content-between align-items-center">
             <h2 class="mb-0">Customer Orders</h2>
@@ -104,3 +106,4 @@
 
     </div>
 @endsection
+
